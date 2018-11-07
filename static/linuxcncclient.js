@@ -1021,6 +1021,27 @@ function SystemSocketMessageHandler(evt)
 
 }
 
+function E_Stop_OFF()
+{
+    console.log("E_Stop_OFF(): enter\n");
+    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ESTOP_RESET" }) ) ;
+    console.log("E_Stop_OFF(): exit\n");
+}
+
+function Machine_ON()
+{
+    console.log("Machine_ON(): enter\n");
+    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ON" }) ) ;
+    console.log("Machine_ON(): exit\n");  
+}
+
+function Go_Home()
+{
+    console.log("Go_Home(): enter\n");
+    ws.send( JSON.stringify({ "id":"Home_Set", "command":"put", "name":"home" }) ) ;
+    console.log("Go_Home(): exit\n");  
+}
+
 function SystemShutdown()
 {
     console.log("SystemShutdown(): enter\n"); // debug
@@ -1134,6 +1155,8 @@ function PollLinuxCNC( type )
     else if (type == 'sandbox')
         ws.custom_onopen = SandboxSocketOpen;
     else if (type == 'system')
+        ws.custom_onopen = SystemSocketOpen;
+    else if (type == 'control')
         ws.custom_onopen = SystemSocketOpen;
     else if (type == 'security')
         ws.custom_onopen = SecuritySocketOpen;

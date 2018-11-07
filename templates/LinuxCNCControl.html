@@ -1,0 +1,49 @@
+{% extends LinuxCNCTemplate.html %}
+
+{% block definitions %}
+    {% set name = 'control' %}
+{%end%}
+
+{% block label %}Control{% end %}
+
+{% block custom_header %}
+{% end %}
+
+{% block custom_body %}
+        <div id="top_button_bar">
+        <button type="button" id="estop_off" value="E_Stop_Off" onclick="E_Stop_OFF();">E-Stop OFF</button>
+        <button type="button" id="machine_on" value="Machine_On" onclick="Machine_ON();">Machine ON</button>
+        <button type="button" id="home_set" value="Home_Set" onclick="Go_Home();">Home Axis (All)</button>
+        </div>
+        <!-- interface -->
+        <div style="text-align:center">
+            <div style="display:inline-block; width:70%; text-align:center">
+                <h2>LinuxCNC + websocketd + python</h2><br />
+                <div style="display:inline-block; width:100%; text-align:center">
+                    <input id="estopoff" type="button" value="E-Stop OFF" />
+                    <input id="machineon" type="button" value="Machine ON" />
+                    <input id="abort" type="button" value="Abort" />
+                    <br />
+                    <br />
+                    X:  <input id="valx" type="text" value="0.0" disabled />
+                        <input id="homex" type="button" value="Home" />
+                        <input id="negx" type="button" value="-" />
+                        <input id="posx" type="button" value="+" />
+                        <br />
+                    Y:  <input id="valy" type="text" value="0.0" disabled />
+                        <input id="homey" type="button" value="Home" />
+                        <input id="negy" type="button" value="-" />
+                        <input id="posy" type="button" value="+" />
+                        <br />
+                    Z:  <input id="valz" type="text" value="0.0" disabled />
+                        <input id="homez" type="button" value="Home" />
+                        <input id="negz" type="button" value="-" />
+                        <input id="posz" type="button" value="+" />
+                        <br />
+                </div>
+                <br />
+            </div>
+        </div>
+
+<p>Current LinuxCNC Status: <span id="LinuxCNCRunStatus">WebServer not available.</span></p>
+{% end %}

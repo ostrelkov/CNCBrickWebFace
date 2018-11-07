@@ -862,6 +862,23 @@ class CommandItem( object ):
         return reply 
     
 
+    def go_home( self ):
+        try:
+            print "go_home() : enter" # my debug
+            
+            c = linuxcnc.command()
+            c.home(0)
+            c.wait_complete() # wait until mode switch executed
+            c.home(1)
+            c.wait_complete() # wait until mode switch executed
+            c.home(2)
+            c.wait_complete() # wait until mode switch executed
+            
+            print "go_home() : exit, return code = ", LinuxCNCServerCommand.REPLY_COMMAND_OK # my debug
+            return {'code':LinuxCNCServerCommand.REPLY_COMMAND_OK }
+        except:
+            return {'code':LinuxCNCServerCommand.REPLY_ERROR_EXECUTING_COMMAND }
+
     def shutdown_linuxcnc( self ):
         try:
             print "shutdown_linuxcnc() : enter" # my debug
@@ -907,14 +924,28 @@ class CommandItem( object ):
             if ((linuxcnc_command is None or (not linuxcnc_status_poller.linuxcnc_is_alive)) and not (self.type == CommandItem.SYSTEM)):
                 return { 'code':LinuxCNCServerCommand.REPLY_LINUXCNC_NOT_RUNNING } 
             
+            print "self.name =", self.name # debug
+            print "self.type =", self.type # debug
+
+            if (self.type == CommandItem.MOTION):
+                print "It is CommandItem.MOTION" # debug
+            
+            print "self.paramTypes =", self.paramTypes
+
             for paramDesc in self.paramTypes:
                 paramval = passed_command_dict.get( paramDesc['pname'], None )
                 if paramval is None:
                     paramval = passed_command_dict.get( paramDesc['ordinal'], None )
                 paramtype = paramDesc['ptype']
 
+#------------------------------------------------------
+                print "ptype =", paramtype # debug
+                print "pname =", paramDesc['pname'] # debug
+#------------------------------------------------------
+
                 if (paramval is not None):
                     if (paramtype == 'lookup'):
+                        print "paramtype == lookup = true"
                         params.append( linuxcnc.__getattribute__( paramval.strip() ) )
                     elif (paramtype == 'float'):
                         params.append( float( paramval ) )
@@ -923,15 +954,25 @@ class CommandItem( object ):
                     else:
                         params.append(paramval)
                 else:
+                    print "paramval is None"
                     if not paramDesc['optional']:
-                        return { 'code':LinuxCNCServerCommand.REPLY_MISSING_COMMAND_PARAMETER + ' ' + paramDesc['name'] }
+                        print "not paramDesc['optional']"
+                        if (self.type != CommandItem.MOTION):
+                            print "self.type != CommandItem.MOTION"
+                            return { 'code':LinuxCNCServerCommand.REPLY_MISSING_COMMAND_PARAMETER + ' ' + paramDesc['name'] }
                     else:
                         break
 
+            print "after for{} CommandItem =", self.type  # debug
+            
             if (self.type == CommandItem.MOTION):
                 print "CommandItem.MOTION =", self.type  # debug
+                print "self.help =", self.help  # debug
                 # execute command as a linuxcnc module call
-                (linuxcnc_command.__getattribute__( self.name ))( *params )
+                if (self.name == 'home'):
+                    reply = self.go_home()
+                else:
+                    (linuxcnc_command.__getattribute__( self.name ))( *params )
 
             elif (self.type == CommandItem.HAL):
                 print "CommandItem.HAL =", self.type  # debug
