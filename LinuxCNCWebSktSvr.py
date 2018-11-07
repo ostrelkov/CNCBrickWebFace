@@ -7,17 +7,6 @@
 #
 # Usage: LinuxCNCWebSktSvr.py <LinuxCNC_INI_file_name>
 #
-# Provides a web server using normal HTTP/HTTPS communication
-# to information about the running LinuxCNC system.  Most
-# data is transferred to and from the server over a
-# WebSocket using JSON formatted commands and replies.
-#
-#
-# ***************************************************** 
-# *****************************************************
-#
-# Copyright 2012, 2013 Machinery Science, LLC
-#
 import sys
 import os
 import gc
@@ -875,8 +864,10 @@ class CommandItem( object ):
 
     def shutdown_linuxcnc( self ):
         try:
+            print "shutdown_linuxcnc() : enter" # my debug
             displayname = StatusItem.get_ini_data( only_section='DISPLAY', only_name='DISPLAY' )['data']['parameters'][0]['values']['value']
             p = subprocess.Popen( ['pkill', displayname] , stderr=subprocess.STDOUT )
+            print "shutdown_linuxcnc() : exit, return code = ", LinuxCNCServerCommand.REPLY_COMMAND_OK # my debug
             return {'code':LinuxCNCServerCommand.REPLY_COMMAND_OK }
         except:
             return {'code':LinuxCNCServerCommand.REPLY_ERROR_EXECUTING_COMMAND }
@@ -884,11 +875,14 @@ class CommandItem( object ):
     def start_linuxcnc( self ):
         global INI_FILENAME
         global INI_FILE_PATH
+
+        print "start_linuxcnc() : enter" # my debug
         p = subprocess.Popen(['pidof', '-x', 'linuxcnc'], stdout=subprocess.PIPE )
         result = p.communicate()[0]
         if len(result) > 0:
             return {'code':LinuxCNCServerCommand.REPLY_ERROR_EXECUTING_COMMAND}
         subprocess.Popen(['linuxcnc', INI_FILENAME], stderr=subprocess.STDOUT )
+        print "start_linuxcnc() : exit, return code = ", LinuxCNCServerCommand.REPLY_COMMAND_OK # my debug
         return {'code':LinuxCNCServerCommand.REPLY_COMMAND_OK}
 
     def add_user( self, username, password ):
@@ -935,10 +929,12 @@ class CommandItem( object ):
                         break
 
             if (self.type == CommandItem.MOTION):
+                print "CommandItem.MOTION =", self.type  # debug
                 # execute command as a linuxcnc module call
                 (linuxcnc_command.__getattribute__( self.name ))( *params )
 
             elif (self.type == CommandItem.HAL):
+                print "CommandItem.HAL =", self.type  # debug
                 # implement the command as a halcommand
                 p = subprocess.Popen( ['halcmd'] + filter( lambda a: a != '', [x.strip() for x in params[0].split(' ')]), stderr=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=(1024*64) )
                 stdouterr = p.communicate()
@@ -949,6 +945,7 @@ class CommandItem( object ):
                 reply['data']['err']=stdouterr[1]
                 return reply
             elif (self.type == CommandItem.SYSTEM):
+                print "CommandItem.SYSTEM =", self.type  # debug
                 # command is a special system command
                 reply = {}
                 
@@ -1435,6 +1432,7 @@ class LinuxCNCCommandWebSocketHandler(tornado.websocket.WebSocketHandler):
         global LINUXCNCSTATUS
         super( LinuxCNCCommandWebSocketHandler, self ).__init__( *args, **kwargs )
         self.user_validated = False
+        print "LinuxCNCCommandWebSocketHandler().__init__ : enter"
         print "New websocket Connection..."
     
     def open(self,arg):
@@ -1673,6 +1671,7 @@ def readUserList():
     global userdict
     global application_path
 
+    print "Reading user list..."
     logging.info("Reading user list...")
     userdict = {}
     try:
@@ -1682,6 +1681,9 @@ def readUserList():
             userdict[name] = value
     except Exception as ex:
         print "Error reading users.ini:", ex
+
+    print "Finished reading user list"
+    print "user: ", userdict[name]
 
 # *****************************************************
 # *****************************************************
@@ -1738,6 +1740,7 @@ def main():
         instance_number = random()
         print "Webserver reloading..."
 
+    print "call OptionParser()"
     parser = OptionParser()
     parser.add_option("-v", "--verbose", dest="verbose", default=0,
                       help="Verbosity level.  Default to 0 for quiet.  Set to 5 for max.")
@@ -1749,6 +1752,7 @@ def main():
         print "Arguments: ", args[0]
 
     instance_number = random()
+    print "call LinuxCNCStatusPoller()"
     LINUXCNCSTATUS = LinuxCNCStatusPoller(main_loop, UpdateStatusPollPeriodInMilliSeconds)
 
     if ( int(options.verbose) > 4):
@@ -1765,8 +1769,12 @@ def main():
 
     logging.basicConfig(filename=os.path.join(application_path,'linuxcnc_webserver.log'),format='%(asctime)sZ pid:%(process)s module:%(module)s %(message)s', level=logging.ERROR)
  
+    print "INI File = ", INI_FILENAME
+    print "application_path = ", application_path
+
     #rpdb2.start_embedded_debugger("password")
 
+    print "call readUserList()"
     readUserList()
 
     logging.info("Starting linuxcnc http server...")

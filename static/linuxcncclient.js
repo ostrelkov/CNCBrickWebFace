@@ -1023,7 +1023,9 @@ function SystemSocketMessageHandler(evt)
 
 function SystemShutdown()
 {
+    console.log("SystemShutdown(): enter\n"); // debug
     ws.send( JSON.stringify({ "id":"SystemShutdown", "command":"put", "name":"shutdown" }) ) ;
+    console.log("SystemShutdown(): exit\n"); // debug
 }
 
 function SystemStart()
