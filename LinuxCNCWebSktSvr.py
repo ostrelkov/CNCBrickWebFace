@@ -1733,7 +1733,6 @@ def main():
     global instance_number
     global LINUXCNCSTATUS
     global options
-    global userdict
 
     def fn():
         instance_number = random()
