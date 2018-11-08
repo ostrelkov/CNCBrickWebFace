@@ -867,11 +867,18 @@ class CommandItem( object ):
             print "go_home() : enter" # my debug
             
             c = linuxcnc.command()
+            
+            c.mode(linuxcnc.MODE_MANUAL)
+            c.wait_complete() # wait until mode switch executed
+
             c.home(0)
             c.wait_complete() # wait until mode switch executed
             c.home(1)
             c.wait_complete() # wait until mode switch executed
             c.home(2)
+            c.wait_complete() # wait until mode switch executed
+
+            c.mode(linuxcnc.MODE_AUTO)
             c.wait_complete() # wait until mode switch executed
             
             print "go_home() : exit, return code = ", LinuxCNCServerCommand.REPLY_COMMAND_OK # my debug
@@ -967,7 +974,7 @@ class CommandItem( object ):
             
             if (self.type == CommandItem.MOTION):
                 print "CommandItem.MOTION =", self.type  # debug
-                print "self.help =", self.help  # debug
+                #print "self.help =", self.help  # debug
                 # execute command as a linuxcnc module call
                 if (self.name == 'home'):
                     reply = self.go_home()

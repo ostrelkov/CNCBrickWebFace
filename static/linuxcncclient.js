@@ -1042,6 +1042,37 @@ function Go_Home()
     console.log("Go_Home(): exit\n");  
 }
 
+function Open_File()
+{
+// c.program_open("/home/stepdir/linuxcnc/nc_files/examples/arcspiral.ngc")
+    console.log("Open_File(): enter\n"); // debug
+    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
+// c.reset_interpreter()
+    console.log("Open_File(): exit\n"); // debug
+}
+
+// CommandItem( name='auto',                    paramTypes=[ {'pname':'auto', 'ptype':'lookup', 'lookup-vals':['AUTO_RUN','AUTO_STEP','AUTO_RESUME','AUTO_PAUSE'], 'optional':False }, {'pname':'run_from', 'ptype':'int', 'optional':True} ],      help='run, step, pause or resume a program.  auto legal values: AUTO_RUN, AUTO_STEP, AUTO_RESUME, AUTO_PAUSE' ).register_in_dict( CommandItems )
+
+function Play_Gcodes()
+{
+    ws.send( JSON.stringify({ "id":"Play_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_RUN" }) ) ;  
+}
+
+function Step_Gcodes()
+{
+  
+}
+
+function Pause_Gcodes()
+{
+  
+}
+
+function Stop_Gcodes()
+{
+  
+}
+
 function SystemShutdown()
 {
     console.log("SystemShutdown(): enter\n"); // debug
