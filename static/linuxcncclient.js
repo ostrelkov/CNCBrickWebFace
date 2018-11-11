@@ -1042,35 +1042,48 @@ function Go_Home()
     console.log("Go_Home(): exit\n");  
 }
 
-function Open_File()
+function Open_3D_File()
 {
 // c.program_open("/home/stepdir/linuxcnc/nc_files/examples/arcspiral.ngc")
-    console.log("Open_File(): enter\n"); // debug
+    console.log("Open_3D_File(): enter\n"); // debug
     ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
 // c.reset_interpreter()
-    console.log("Open_File(): exit\n"); // debug
+    console.log("Open_3D_File(): exit\n"); // debug
 }
-
-// CommandItem( name='auto',                    paramTypes=[ {'pname':'auto', 'ptype':'lookup', 'lookup-vals':['AUTO_RUN','AUTO_STEP','AUTO_RESUME','AUTO_PAUSE'], 'optional':False }, {'pname':'run_from', 'ptype':'int', 'optional':True} ],      help='run, step, pause or resume a program.  auto legal values: AUTO_RUN, AUTO_STEP, AUTO_RESUME, AUTO_PAUSE' ).register_in_dict( CommandItems )
 
 function Play_Gcodes()
 {
-    ws.send( JSON.stringify({ "id":"Play_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_RUN" }) ) ;  
+// CommandItem( name='auto', paramTypes=[ {'pname':'auto', 'ptype':'lookup', 'lookup-vals':['AUTO_RUN','AUTO_STEP','AUTO_RESUME','AUTO_PAUSE'], 'optional':False }, {'pname':'run_from', 'ptype':'int', 'optional':True} ],
+// help='run, step, pause or resume a program.  auto legal values: AUTO_RUN, AUTO_STEP, AUTO_RESUME, AUTO_PAUSE' ).register_in_dict( CommandItems )
+    ws.send( JSON.stringify({ "id":"Play_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_RUN", "run_from":"0" }) ) ;  
 }
 
 function Step_Gcodes()
 {
-  
+    console.log("Step_Gcodes(): enter\n"); // debug
+    ws.send( JSON.stringify({ "id":"Step_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_STEP" }) ) ;  
+    console.log("Step_Gcodes(): exit\n"); // debug
 }
 
 function Pause_Gcodes()
 {
-  
+    console.log("Pause_Gcodes(): enter\n"); // debug
+    ws.send( JSON.stringify({ "id":"Pause_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_PAUSE" }) ) ;  
+    console.log("Pause_Gcodes(): exit\n"); // debug
 }
 
-function Stop_Gcodes()
+function Resume_Gcodes()
 {
-  
+    console.log("Resume_Gcodes(): enter\n"); // debug
+    ws.send( JSON.stringify({ "id":"Resume_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_RESUME" }) ) ;  
+    console.log("Resume_Gcodes(): exit\n"); // debug
+}
+
+function Stop_Gcodes() // Abort
+{
+    console.log("Stop_Gcodes(): enter\n"); // debug
+    ws.send( JSON.stringify({ "id":"Stop_Gcodes", "command":"put", "name":"abort" }) ) ;  
+    console.log("Stop_Gcodes(): exit\n"); // debug
 }
 
 function SystemShutdown()

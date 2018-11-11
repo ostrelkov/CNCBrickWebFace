@@ -973,16 +973,19 @@ class CommandItem( object ):
             print "after for{} CommandItem =", self.type  # debug
             
             if (self.type == CommandItem.MOTION):
-                print "CommandItem.MOTION =", self.type  # debug
+                print "\nCommandItem.MOTION =", self.type  # debug
                 #print "self.help =", self.help  # debug
                 # execute command as a linuxcnc module call
                 if (self.name == 'home'):
                     reply = self.go_home()
+                elif (self.name == 'auto'):
+                    print "auto command" # debug
+                    (linuxcnc_command.__getattribute__( self.name ))( *params )
                 else:
                     (linuxcnc_command.__getattribute__( self.name ))( *params )
 
             elif (self.type == CommandItem.HAL):
-                print "CommandItem.HAL =", self.type  # debug
+                print "\nCommandItem.HAL =", self.type  # debug
                 # implement the command as a halcommand
                 p = subprocess.Popen( ['halcmd'] + filter( lambda a: a != '', [x.strip() for x in params[0].split(' ')]), stderr=subprocess.PIPE, stdout=subprocess.PIPE, bufsize=(1024*64) )
                 stdouterr = p.communicate()
@@ -993,7 +996,7 @@ class CommandItem( object ):
                 reply['data']['err']=stdouterr[1]
                 return reply
             elif (self.type == CommandItem.SYSTEM):
-                print "CommandItem.SYSTEM =", self.type  # debug
+                print "\nCommandItem.SYSTEM =", self.type  # debug
                 # command is a special system command
                 reply = {}
                 
