@@ -113,15 +113,129 @@ function StatusObject(name,description, typestr,isarray,arrayIndex)
     };
 }
 
-// ******** Arra of StatusObjects
+// object to store each linuxcnc status variable, and remember
+// where to output its value in the table
+function StatusObject_2(name,description, typestr, isarray,arrayIndex)
+{
+    this.name = name;
+    this.description = description;
+    this.valtype = typestr;
+    this.isarray = isarray;
+    this.arrayIndex = arrayIndex;
+    this.outputCell = null;
+    if (this.isarray)
+        this.arrayIndex = arrayIndex;
+    else 
+        this.arrayIndex = 0;
+
+    this.decorated_name = function() 
+    { 
+        if (this.isarray) 
+            return (this.name + "[" + this.arrayIndex.toString() + "]");
+        else 
+            return(this.name); 
+    };
+}
+
+
+// ******** Array of StatusObjects
 var StatusItems = new Array();
 
 // WebSocket is open: send a request to the server
 function StatusSocketOpen()
 {
+    console.log("StatusSocketOpen(): enter\n"); // debug
     // Get a list from the server of all linuxcnc status items
     ws.onmessage = StatusListRecieved;
     ws.send( JSON.stringify({ "id":"getlist", "command":"list_get" }) ) ;
+    console.log("StatusSocketOpen(): exit\n"); // debug
+}
+
+// WebSocket is open: send a request to the server
+function StatusSocketOpen_2()
+{
+    console.log("# StatusSocketOpen_2(): enter\n"); // debug
+    // Get a list from the server of all linuxcnc status items
+    ws.onmessage = StatusListRecieved_2;
+    ws.send( JSON.stringify({ "id":"getlist", "command":"list_get" }) ) ;
+//    console.log( JSON.stringify({ "id":"getlist", "command":"list_get" }) ); // debug
+    console.log("# StatusSocketOpen_2(): exit\n"); // debug
+}
+
+function StatusListRecieved_2(evt)
+{
+    console.log("## StatusListRecieved_2(): enter\n");
+    // future socket replies should not go to this function
+    // anymore.  Instead, send them on to MessageHandlerServerReply
+    ws.onmessage = MessageHandlerServerReply
+
+    // parse the list of status items from the server
+    var status_item_list = JSON.parse(evt.data);
+
+//    console.log("## 1: " + JSON.stringify(evt.data)); // debug   
+//?    console.log("## 2: " + status_item_list['data'][21]["name"]);
+    console.log("## 2: " + status_item_list['data'][21]["name"], status_item_list['data'][21]["valtype"], status_item_list['data'][21]["isarray"]);
+/*    
+    var str = new StatusObject_2(status_item_list['data'][21]["name"], status_item_list['data'][21]["valtype"], status_item_list['data'][21]["isarray"], 0);
+    console.log("## 3: " +  str ); 
+*/
+    // Create the table of status items
+    var root=document.getElementById("LinuxCNCStatusTable");   
+    var txt=document.createElement('p');
+    
+    var my_text = "my text: " + "1 2 3 4 5";
+
+    txt.appendChild(document.createTextNode(my_text.toString()));
+    txt.appendChild(document.createElement('br'));
+    
+    for (var i=0; i<status_item_list['data'].length; i++) {
+        var arcnt ;
+		
+		if (!status_item_list['data'][i]['watchable'])
+			continue;
+		
+        if (status_item_list['data'][i]["isarray"])
+            arcnt = status_item_list['data'][i]["arraylength"];
+        else
+            arcnt = 1;
+
+	if (i == 21) {
+          for (var aridx = 0; aridx < arcnt; aridx++) {
+
+            var id = i.toString() + "," + aridx.toString();
+            StatusItems[ id ] = new StatusObject_2( status_item_list['data'][i]["name"], status_item_list['data'][i]["help"], status_item_list['data'][i]["valtype"], status_item_list['data'][i]["isarray"], aridx );
+//?            StatusItems[ id ] = new StatusObject_2( status_item_list['data'][i]["name"], status_item_list['data'][i]["valtype"], status_item_list['data'][i]["isarray"], aridx );
+
+            console.log("## 4: %s\n", id); // debug
+	    console.log("## 5: StatusItems[id] = ", StatusItems[id] ); // debug
+/*
+            if (status_item_list['data'][i]["isarray"]) {
+                txt.appendChild(document.createTextNode(id));
+                if (arcnt == 0)
+                    txt.setAttribute("name", StatusItems[id].name );
+            } else {
+                txt.appendChild(document.createTextNode(i.toString()));
+                txt.setAttribute("name", StatusItems[id].name );
+            }
+*/            
+            txt.appendChild(document.createTextNode(StatusItems[id].decorated_name()));
+
+            outputCell = document.createElement('div');
+            txt.appendChild(outputCell);
+            StatusItems[id].outputCell = outputCell; //???
+
+            ws.send( JSON.stringify({ "id":id, "command":"watch", "name":StatusItems[id].name, "index":aridx }) ); 
+	    
+            console.log("## 6: " +  StatusItems[id].name ); // "actual_position" debug
+            console.log("## 7: " +  StatusItems[id].decorated_name(), StatusItems[id].description ); // debug
+//            console.log("## 8: " +  StatusItems[id].outputCell ); // debug
+            console.log("## 9: " +  JSON.stringify({ "id":id, "command":"watch", "name":StatusItems[id].name, "index":aridx }) ); // debug
+          }
+	}
+    }
+
+    root.appendChild(txt); 
+    console.log("## StatusListRecieved_2(): exit\n");
 }
 
 // the initial request for a list of status items has been
@@ -985,6 +1099,20 @@ function DeleteUser()
 }
 
 
+// ********************************
+// for System tab
+// 
+// Simple interface for starting and stopping LinuxCNC
+// ********************************
+function ControlSocketOpen()
+{
+    ws.onmessage = SystemSocketMessageHandler;
+    document.getElementById("Command_Reply").innerHTML = "Server Connection Initiated"
+
+   // Get a list from the server of all linuxcnc status items
+    ws.send( JSON.stringify({ "id":"STATUS_CHECK", "command":"watch", "name":"running" }) ) ;
+    ws.send( JSON.stringify({ "id":"INI_MONITOR", "command":"watch", "name":"ini_file_name" }) ) ;
+}
 
 // ********************************
 // for System tab
@@ -1186,6 +1314,8 @@ function PollLinuxCNC( type )
     
     if (type == 'status')
         ws.custom_onopen = StatusSocketOpen;
+    else if (type == 'status_2')
+        ws.custom_onopen = StatusSocketOpen_2;
     else if (type == 'commands')
         ws.custom_onopen = CommandSocketOpen;
     else if (type == 'keepalive')
@@ -1201,7 +1331,7 @@ function PollLinuxCNC( type )
     else if (type == 'system')
         ws.custom_onopen = SystemSocketOpen;
     else if (type == 'control')
-        ws.custom_onopen = SystemSocketOpen;
+        ws.custom_onopen = ControlSocketOpen;
     else if (type == 'security')
         ws.custom_onopen = SecuritySocketOpen;
 
