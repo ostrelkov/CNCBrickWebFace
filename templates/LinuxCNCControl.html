@@ -27,9 +27,17 @@
         </form>-->
         </div>
         <!-- interface -->
-        <div style="text-align:center">
+        <div style="text-align:left">
+            <p>X: <span id="actual_pos_x">0.0</span>&nbsp;[mm]<br>
+               Y: <span id="actual_pos_y">0.0</span>&nbsp;[mm]<br>
+               Z: <span id="actual_pos_z">0.0</span>&nbsp;[mm]</p>
+            <p>DTG X: <span id="dtg_pos_x">0.0</span>&nbsp;[mm]<br>
+               DTG Y: <span id="dtg_pos_y">0.0</span>&nbsp;[mm]<br>
+               DTG Z: <span id="dtg_pos_z">0.0</span>&nbsp;[mm]</p>
+        </div>
+<!--        
+        <div style="text-align:center">        
             <div style="display:inline-block; width:70%; text-align:center">
-<!--                <h2>LinuxCNC + websocketd + python</h2><br />-->
                 <div style="display:inline-block; width:100%; text-align:center">
                     <br />
                     X:  <input id="valx" type="text" value="0.0" disabled />
@@ -51,6 +59,10 @@
                 <br />
             </div>
         </div>
-
+-->
+<hr>
+<p>G codes file content:
+</p>
+<hr>
 <p>Current LinuxCNC Status: <span id="LinuxCNCRunStatus">WebServer not available.</span></p>
 {% end %}

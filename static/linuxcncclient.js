@@ -113,37 +113,35 @@ function StatusObject(name,description, typestr,isarray,arrayIndex)
     };
 }
 
-// object to store each linuxcnc status variable, and remember
-// where to output its value in the table
-function StatusObject_2(name,description, typestr, isarray,arrayIndex)
-{
-    this.name = name;
-    this.description = description;
-    this.valtype = typestr;
-    this.isarray = isarray;
-    this.arrayIndex = arrayIndex;
-    this.outputCell = null;
-    if (this.isarray)
-        this.arrayIndex = arrayIndex;
-    else 
-        this.arrayIndex = 0;
+// function StatusObject_2(name,description, typestr, isarray,arrayIndex)
+// {
+//     this.name = name;
+//     this.description = description;
+//     this.valtype = typestr;
+//     this.isarray = isarray;
+//     this.arrayIndex = arrayIndex;
+//     this.outputCell = null;
+//     if (this.isarray)
+//         this.arrayIndex = arrayIndex;
+//     else 
+//         this.arrayIndex = 0;
+// 
+//     this.decorated_name = function() 
+//     { 
+//         if (this.isarray) 
+//             return (this.name + "[" + this.arrayIndex.toString() + "]");
+//         else 
+//             return(this.name); 
+//     };
+// }
 
-    this.decorated_name = function() 
-    { 
-        if (this.isarray) 
-            return (this.name + "[" + this.arrayIndex.toString() + "]");
-        else 
-            return(this.name); 
-    };
-}
-
-function StatusObjectCoord(name)
-{
-    this.name = name;
-    this.outputCell = null;
-
-    return(this.name); 
-}
+// function StatusObjectCoord(name)
+// {
+//     this.name = name;
+//     this.outputCell = null;
+// 
+//     return(this.name); 
+// }
 
 
 // ******** Array of StatusObjects
@@ -160,142 +158,141 @@ function StatusSocketOpen()
 }
 
 // WebSocket is open: send a request to the server
-function StatusSocketOpen_2()
-{
-    console.log("# StatusSocketOpen_2(): enter\n"); // debug
-    // Get a list from the server of all linuxcnc status items
-//    ws.onmessage = StatusListRecieved_2;
-//    ws.send( JSON.stringify({ "id":"getlist", "command":"list_get" }) ) ;
-//x    console.log( JSON.stringify({ "id":"getlist", "command":"list_get" }) ); // debug
-    
-    ws.onmessage = StatusListRecieved_2n;
-    ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"get", "name":"actual_position" }) );
-    ws.send( JSON.stringify({ "id":"DTG_POS", "command":"get", "name":"dtg" }) );
-    console.log("# StatusSocketOpen_2(): exit\n"); // debug
-}
+// function StatusSocketOpen_2()
+// {
+//     console.log("# StatusSocketOpen_2(): enter\n"); // debug
+//     // Get a list from the server of all linuxcnc status items
+// //    ws.onmessage = StatusListRecieved_2;
+// //    ws.send( JSON.stringify({ "id":"getlist", "command":"list_get" }) ) ;
+// //x    console.log( JSON.stringify({ "id":"getlist", "command":"list_get" }) ); // debug
+//     
+//     ws.onmessage = StatusListRecieved_2n;
+//     ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"get", "name":"actual_position" }) );
+//     console.log("# StatusSocketOpen_2(): exit\n"); // debug
+// }
 
-function StatusListRecieved_2n(evt)
-{
-    console.log("## StatusListRecieved_2n(): enter\n");
+// function StatusListRecieved_2n(evt)
+// {
+//     console.log("## StatusListRecieved_2n(): enter\n");
+// 
+//     ws.onmessage = MessageHandlerServerReplyCoord;
+// 
+//     var result = JSON.parse(evt.data);
+// 
+//     console.log("## StatusListRecieved_2n():" + result ); // debug
+//  
+//     var root=document.getElementById("LinuxCNCStatusTable");   
+//     var txt=document.createElement('p');
+//     var my_text = "my text: " + "X Y Z";
+// 
+//     txt.appendChild(document.createTextNode(my_text.toString()));
+//     txt.appendChild(document.createElement('br'));
+//     
+//     if ( result['id'] == 'ACTUAL_POS' ) {
+//         console.log("## StatusListRecieved_2n(): id == ACTUAL_POS\n"); // debug
+//         StatusItems['ACTUAL_POS'] = new StatusObjectCoord("actual_position");
+//         outputCell = document.createElement('div');
+//         txt.appendChild(outputCell);
+//         StatusItems['ACTUAL_POS'].outputCell = outputCell;
+// 
+//         ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"watch", "name":"actual_position" }) );       
+//     }
+//     root.appendChild(txt); 
+//     
+//     console.log("## StatusListRecieved_2n(): exit\n");
+// }
 
-    ws.onmessage = MessageHandlerServerReplyCoord;
-
-    var result = JSON.parse(evt.data);
-
-    console.log("## StatusListRecieved_2n():" + result ); // debug
- 
-    var root=document.getElementById("LinuxCNCStatusTable");   
-    var txt=document.createElement('p');
-    var my_text = "my text: " + "X Y Z";
-
-    txt.appendChild(document.createTextNode(my_text.toString()));
-    txt.appendChild(document.createElement('br'));
-    
-    if ( result['id'] == 'ACTUAL_POS' ) {
-        console.log("## StatusListRecieved_2n(): id == ACTUAL_POS\n"); // debug
-        StatusItems['ACTUAL_POS'] = new StatusObjectCoord("actual_position");
-        outputCell = document.createElement('div');
-        txt.appendChild(outputCell);
-        StatusItems['ACTUAL_POS'].outputCell = outputCell;
-
-        ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"watch", "name":"actual_position" }) );       
-    }
-    root.appendChild(txt); 
-    
-    console.log("## StatusListRecieved_2n(): exit\n");
-}
-
-function StatusListRecieved_2(evt)
-{
-    console.log("## StatusListRecieved_2(): enter\n");
-    // future socket replies should not go to this function
-    // anymore.  Instead, send them on to MessageHandlerServerReply
-    ws.onmessage = MessageHandlerServerReply;
-
-    // parse the list of status items from the server
-    var status_item_list = JSON.parse(evt.data);
-
-//    console.log("## 1: " + JSON.stringify(evt.data)); // debug   
-//?    console.log("## 2: " + status_item_list['data'][21]["name"]);
-    console.log("## 2: " + status_item_list['data'][21]["name"], status_item_list['data'][21]["valtype"], status_item_list['data'][21]["isarray"]);
-/*    
-    var str = new StatusObject_2(status_item_list['data'][21]["name"], status_item_list['data'][21]["valtype"], status_item_list['data'][21]["isarray"], 0);
-    console.log("## 3: " +  str ); 
-*/
-    // Create the table of status items
-    var root=document.getElementById("LinuxCNCStatusTable");   
-    var txt=document.createElement('p');
-    
-    var my_text = "my text: " + "1 2 3 4 5";
-
-    txt.appendChild(document.createTextNode(my_text.toString()));
-    txt.appendChild(document.createElement('br'));
-    
-    for (var i=0; i<status_item_list['data'].length; i++) {
-        var arcnt ;
-		
-		if (!status_item_list['data'][i]['watchable'])
-			continue;
-		
-        if (status_item_list['data'][i]["isarray"])
-            arcnt = status_item_list['data'][i]["arraylength"];
-        else
-            arcnt = 1;
-
-	if (i == 21) {
-          for (var aridx = 0; aridx < arcnt; aridx++) {
-
-            var id = i.toString() + "," + aridx.toString();
-            StatusItems[ id ] = new StatusObject_2( status_item_list['data'][i]["name"], status_item_list['data'][i]["help"], status_item_list['data'][i]["valtype"], status_item_list['data'][i]["isarray"], aridx );
-//?            StatusItems[ id ] = new StatusObject_2( status_item_list['data'][i]["name"], status_item_list['data'][i]["valtype"], status_item_list['data'][i]["isarray"], aridx );
-
-            console.log("## 4: %s\n", id); // debug
-	    console.log("## 5: StatusItems[id] = ", StatusItems[id] ); // debug
-/*
-            if (status_item_list['data'][i]["isarray"]) {
-                txt.appendChild(document.createTextNode(id));
-                if (arcnt == 0)
-                    txt.setAttribute("name", StatusItems[id].name );
-            } else {
-                txt.appendChild(document.createTextNode(i.toString()));
-                txt.setAttribute("name", StatusItems[id].name );
-            }
-*/            
-            txt.appendChild(document.createTextNode(StatusItems[id].decorated_name()));
-
-            outputCell = document.createElement('div');
-            txt.appendChild(outputCell);
-            StatusItems[id].outputCell = outputCell; //???
-
-            ws.send( JSON.stringify({ "id":id, "command":"watch", "name":StatusItems[id].name, "index":aridx }) ); 
-	    
-            console.log("## 6: " +  StatusItems[id].name ); // "actual_position" debug
-            console.log("## 7: " +  StatusItems[id].decorated_name(), StatusItems[id].description ); // debug
-//            console.log("## 8: " +  StatusItems[id].outputCell ); // debug
-            console.log("## 9: " +  JSON.stringify({ "id":id, "command":"watch", "name":StatusItems[id].name, "index":aridx }) ); // debug
-          }
-	}
-    }
-
-    root.appendChild(txt); 
-/*    
-    var root1=document.getElementById("abs_x");   
-    var abs_X=document.createElement('input');
-    
-    StatusItems[id].outputCell = abs_X; //???
-
-//    txt.appendChild(document.createTextNode(my_text.toString()));
-//    txt.appendChild(document.createElement('br'));
-
-    root1.appendChild(abs_X); 
-*/    
-/*
-    var inp_X=document.getElementById("inp_x");   
-    StatusItems[id].outputCell = inp_X; //???
-    inp_X.appendChild(inp_X); 
-*/    
-    console.log("## StatusListRecieved_2(): exit\n");
-}
+// function StatusListRecieved_2(evt)
+// {
+//     console.log("## StatusListRecieved_2(): enter\n");
+//     // future socket replies should not go to this function
+//     // anymore.  Instead, send them on to MessageHandlerServerReply
+//     ws.onmessage = MessageHandlerServerReply;
+// 
+//     // parse the list of status items from the server
+//     var status_item_list = JSON.parse(evt.data);
+// 
+// //    console.log("## 1: " + JSON.stringify(evt.data)); // debug   
+// //?    console.log("## 2: " + status_item_list['data'][21]["name"]);
+//     console.log("## 2: " + status_item_list['data'][21]["name"], status_item_list['data'][21]["valtype"], status_item_list['data'][21]["isarray"]);
+// /*    
+//     var str = new StatusObject_2(status_item_list['data'][21]["name"], status_item_list['data'][21]["valtype"], status_item_list['data'][21]["isarray"], 0);
+//     console.log("## 3: " +  str ); 
+// */
+//     // Create the table of status items
+//     var root=document.getElementById("LinuxCNCStatusTable");   
+//     var txt=document.createElement('p');
+//     
+//     var my_text = "my text: " + "1 2 3 4 5";
+// 
+//     txt.appendChild(document.createTextNode(my_text.toString()));
+//     txt.appendChild(document.createElement('br'));
+//     
+//     for (var i=0; i<status_item_list['data'].length; i++) {
+//         var arcnt ;
+// 		
+// 		if (!status_item_list['data'][i]['watchable'])
+// 			continue;
+// 		
+//         if (status_item_list['data'][i]["isarray"])
+//             arcnt = status_item_list['data'][i]["arraylength"];
+//         else
+//             arcnt = 1;
+// 
+// 	if (i == 21) {
+//           for (var aridx = 0; aridx < arcnt; aridx++) {
+// 
+//             var id = i.toString() + "," + aridx.toString();
+//             StatusItems[ id ] = new StatusObject_2( status_item_list['data'][i]["name"], status_item_list['data'][i]["help"], status_item_list['data'][i]["valtype"], status_item_list['data'][i]["isarray"], aridx );
+// //?            StatusItems[ id ] = new StatusObject_2( status_item_list['data'][i]["name"], status_item_list['data'][i]["valtype"], status_item_list['data'][i]["isarray"], aridx );
+// 
+//             console.log("## 4: %s\n", id); // debug
+// 	    console.log("## 5: StatusItems[id] = ", StatusItems[id] ); // debug
+// /*
+//             if (status_item_list['data'][i]["isarray"]) {
+//                 txt.appendChild(document.createTextNode(id));
+//                 if (arcnt == 0)
+//                     txt.setAttribute("name", StatusItems[id].name );
+//             } else {
+//                 txt.appendChild(document.createTextNode(i.toString()));
+//                 txt.setAttribute("name", StatusItems[id].name );
+//             }
+// */            
+//             txt.appendChild(document.createTextNode(StatusItems[id].decorated_name()));
+// 
+//             outputCell = document.createElement('div');
+//             txt.appendChild(outputCell);
+//             StatusItems[id].outputCell = outputCell; //???
+// 
+//             ws.send( JSON.stringify({ "id":id, "command":"watch", "name":StatusItems[id].name, "index":aridx }) ); 
+// 	    
+//             console.log("## 6: " +  StatusItems[id].name ); // "actual_position" debug
+//             console.log("## 7: " +  StatusItems[id].decorated_name(), StatusItems[id].description ); // debug
+// //            console.log("## 8: " +  StatusItems[id].outputCell ); // debug
+//             console.log("## 9: " +  JSON.stringify({ "id":id, "command":"watch", "name":StatusItems[id].name, "index":aridx }) ); // debug
+//           }
+// 	}
+//     }
+// 
+//     root.appendChild(txt); 
+// /*    
+//     var root1=document.getElementById("abs_x");   
+//     var abs_X=document.createElement('input');
+//     
+//     StatusItems[id].outputCell = abs_X; //???
+// 
+// //    txt.appendChild(document.createTextNode(my_text.toString()));
+// //    txt.appendChild(document.createElement('br'));
+// 
+//     root1.appendChild(abs_X); 
+// */    
+// /*
+//     var inp_X=document.getElementById("inp_x");   
+//     StatusItems[id].outputCell = inp_X; //???
+//     inp_X.appendChild(inp_X); 
+// */    
+//     console.log("## StatusListRecieved_2(): exit\n");
+// }
 
 // the initial request for a list of status items has been
 // recieved.  Create the table of values to display.
@@ -434,34 +431,34 @@ function MessageHandlerServerReply(evt)
         outputcell.innerHTML = prepend + result["data"].toString().trim().replace( /\n/g, "<br/>" );
 }
 
-var counter = 0; // debug
-
-function MessageHandlerServerReplyCoord(evt)
-{
-    var result = JSON.parse(evt.data);
-
-    var outputcell;
-    var prepend = "";
-
-    if ( result["id"] == "ACTUAL_POS" ) {
-        var actual_pos = new Array();
-
-	actual_pos = result['data'];
-        outputcell = StatusItems[ result["id"] ].outputCell;
-
-        console.log("## MessageHandlerServerReplyCoord(): ", result);
-        console.log("## MessageHandlerServerReplyCoord(): ", outputcell);
-	
-	counter++;
-         console.log("## MessageHandlerServerReplyCoord(): ", counter);
-	
-	outputcell.innerHTML = prepend;
-	outputcell.innerHTML += counter + "<br>"; // debug
-	outputcell.innerHTML += "X: " + actual_pos[0].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
-	outputcell.innerHTML += "Y: " + actual_pos[1].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
-	outputcell.innerHTML += "Z: " + actual_pos[2].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
-    }
-}
+// var counter = 0; // debug
+// 
+// function MessageHandlerServerReplyCoord(evt)
+// {
+//     var result = JSON.parse(evt.data);
+// 
+//     var outputcell;
+//     var prepend = "";
+// 
+//     if ( result["id"] == "ACTUAL_POS" ) {
+//         var actual_pos = new Array();
+// 
+// 	actual_pos = result['data'];
+//         outputcell = StatusItems[ result["id"] ].outputCell;
+// 
+//         console.log("## MessageHandlerServerReplyCoord(): ", result);
+//         console.log("## MessageHandlerServerReplyCoord(): ", outputcell);
+// 	
+// 	counter++;
+//          console.log("## MessageHandlerServerReplyCoord(): ", counter);
+// 	
+// 	outputcell.innerHTML = prepend;
+// 	outputcell.innerHTML += counter + "<br>"; // debug
+// 	outputcell.innerHTML += "X: " + actual_pos[0].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
+// 	outputcell.innerHTML += "Y: " + actual_pos[1].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
+// 	outputcell.innerHTML += "Z: " + actual_pos[2].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
+//     }
+// }
 
 // **********************************
 // Setup COMMAND Processing
@@ -1193,12 +1190,42 @@ function DeleteUser()
 // ********************************
 function ControlSocketOpen()
 {
-    ws.onmessage = SystemSocketMessageHandler;
+    ws.onmessage = ControlSocketMessageHandler;
     document.getElementById("Command_Reply").innerHTML = "Server Connection Initiated"
 
    // Get a list from the server of all linuxcnc status items
     ws.send( JSON.stringify({ "id":"STATUS_CHECK", "command":"watch", "name":"running" }) ) ;
-    ws.send( JSON.stringify({ "id":"INI_MONITOR", "command":"watch", "name":"ini_file_name" }) ) ;
+//    ws.send( JSON.stringify({ "id":"INI_MONITOR", "command":"watch", "name":"ini_file_name" }) ) ;
+    ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"watch", "name":"actual_position" }) );
+//x    ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"get", "name":"actual_position" }) );
+    ws.send( JSON.stringify({ "id":"DTG_POS", "command":"watch", "name":"dtg" }) );
+}
+
+function ControlSocketMessageHandler(evt)
+{
+    var result = JSON.parse(evt.data);
+    var actual_pos = new Array();
+    
+    if ( result["id"] == "STATUS_CHECK" ) {
+//x	console.log("## ControlSocketMessageHandler(): id == STATUS_CHECK\n"); // debug
+        if (result["data"] == 1) {
+            document.getElementById("LinuxCNCRunStatus").innerHTML = "Running";
+	} else {
+            document.getElementById("LinuxCNCRunStatus").innerHTML = "Down";
+	}
+    } else if ( result["id"] == "ACTUAL_POS" ) {
+        actual_pos = result['data'];
+//x	console.log("## ControlSocketMessageHandler(): id == ACTUAL_POS\n"); // debug
+        document.getElementById("actual_pos_x").innerHTML = actual_pos[0].toFixed(4);
+        document.getElementById("actual_pos_y").innerHTML = actual_pos[1].toFixed(4);
+        document.getElementById("actual_pos_z").innerHTML = actual_pos[2].toFixed(4);
+    } else if ( result["id"] == "DTG_POS" ) {
+        actual_pos = result['data'];
+//x	console.log("## ControlSocketMessageHandler(): id == DTG_POS\n"); // debug
+        document.getElementById("dtg_pos_x").innerHTML = actual_pos[0].toFixed(4);
+        document.getElementById("dtg_pos_y").innerHTML = actual_pos[1].toFixed(4);
+        document.getElementById("dtg_pos_z").innerHTML = actual_pos[2].toFixed(4);
+    }
 }
 
 // ********************************
@@ -1403,8 +1430,8 @@ function PollLinuxCNC( type )
     
     if (type == 'status')
         ws.custom_onopen = StatusSocketOpen;
-    else if (type == 'status_2')
-        ws.custom_onopen = StatusSocketOpen_2;
+//x    else if (type == 'status_2')
+//x        ws.custom_onopen = StatusSocketOpen_2;
     else if (type == 'commands')
         ws.custom_onopen = CommandSocketOpen;
     else if (type == 'keepalive')
