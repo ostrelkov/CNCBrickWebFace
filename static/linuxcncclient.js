@@ -137,6 +137,14 @@ function StatusObject_2(name,description, typestr, isarray,arrayIndex)
     };
 }
 
+function StatusObjectCoord(name)
+{
+    this.name = name;
+    this.outputCell = null;
+
+    return(this.name); 
+}
+
 
 // ******** Array of StatusObjects
 var StatusItems = new Array();
@@ -156,10 +164,45 @@ function StatusSocketOpen_2()
 {
     console.log("# StatusSocketOpen_2(): enter\n"); // debug
     // Get a list from the server of all linuxcnc status items
-    ws.onmessage = StatusListRecieved_2;
-    ws.send( JSON.stringify({ "id":"getlist", "command":"list_get" }) ) ;
-//    console.log( JSON.stringify({ "id":"getlist", "command":"list_get" }) ); // debug
+//    ws.onmessage = StatusListRecieved_2;
+//    ws.send( JSON.stringify({ "id":"getlist", "command":"list_get" }) ) ;
+//x    console.log( JSON.stringify({ "id":"getlist", "command":"list_get" }) ); // debug
+    
+    ws.onmessage = StatusListRecieved_2n;
+    ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"get", "name":"actual_position" }) );
+    ws.send( JSON.stringify({ "id":"DTG_POS", "command":"get", "name":"dtg" }) );
     console.log("# StatusSocketOpen_2(): exit\n"); // debug
+}
+
+function StatusListRecieved_2n(evt)
+{
+    console.log("## StatusListRecieved_2n(): enter\n");
+
+    ws.onmessage = MessageHandlerServerReplyCoord;
+
+    var result = JSON.parse(evt.data);
+
+    console.log("## StatusListRecieved_2n():" + result ); // debug
+ 
+    var root=document.getElementById("LinuxCNCStatusTable");   
+    var txt=document.createElement('p');
+    var my_text = "my text: " + "X Y Z";
+
+    txt.appendChild(document.createTextNode(my_text.toString()));
+    txt.appendChild(document.createElement('br'));
+    
+    if ( result['id'] == 'ACTUAL_POS' ) {
+        console.log("## StatusListRecieved_2n(): id == ACTUAL_POS\n"); // debug
+        StatusItems['ACTUAL_POS'] = new StatusObjectCoord("actual_position");
+        outputCell = document.createElement('div');
+        txt.appendChild(outputCell);
+        StatusItems['ACTUAL_POS'].outputCell = outputCell;
+
+        ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"watch", "name":"actual_position" }) );       
+    }
+    root.appendChild(txt); 
+    
+    console.log("## StatusListRecieved_2n(): exit\n");
 }
 
 function StatusListRecieved_2(evt)
@@ -167,7 +210,7 @@ function StatusListRecieved_2(evt)
     console.log("## StatusListRecieved_2(): enter\n");
     // future socket replies should not go to this function
     // anymore.  Instead, send them on to MessageHandlerServerReply
-    ws.onmessage = MessageHandlerServerReply
+    ws.onmessage = MessageHandlerServerReply;
 
     // parse the list of status items from the server
     var status_item_list = JSON.parse(evt.data);
@@ -235,6 +278,22 @@ function StatusListRecieved_2(evt)
     }
 
     root.appendChild(txt); 
+/*    
+    var root1=document.getElementById("abs_x");   
+    var abs_X=document.createElement('input');
+    
+    StatusItems[id].outputCell = abs_X; //???
+
+//    txt.appendChild(document.createTextNode(my_text.toString()));
+//    txt.appendChild(document.createElement('br'));
+
+    root1.appendChild(abs_X); 
+*/    
+/*
+    var inp_X=document.getElementById("inp_x");   
+    StatusItems[id].outputCell = inp_X; //???
+    inp_X.appendChild(inp_X); 
+*/    
     console.log("## StatusListRecieved_2(): exit\n");
 }
 
@@ -375,6 +434,34 @@ function MessageHandlerServerReply(evt)
         outputcell.innerHTML = prepend + result["data"].toString().trim().replace( /\n/g, "<br/>" );
 }
 
+var counter = 0; // debug
+
+function MessageHandlerServerReplyCoord(evt)
+{
+    var result = JSON.parse(evt.data);
+
+    var outputcell;
+    var prepend = "";
+
+    if ( result["id"] == "ACTUAL_POS" ) {
+        var actual_pos = new Array();
+
+	actual_pos = result['data'];
+        outputcell = StatusItems[ result["id"] ].outputCell;
+
+        console.log("## MessageHandlerServerReplyCoord(): ", result);
+        console.log("## MessageHandlerServerReplyCoord(): ", outputcell);
+	
+	counter++;
+         console.log("## MessageHandlerServerReplyCoord(): ", counter);
+	
+	outputcell.innerHTML = prepend;
+	outputcell.innerHTML += counter + "<br>"; // debug
+	outputcell.innerHTML += "X: " + actual_pos[0].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
+	outputcell.innerHTML += "Y: " + actual_pos[1].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
+	outputcell.innerHTML += "Z: " + actual_pos[2].toFixed(4)/*.toString()*/ + " [mm]" + "<br>";
+    }
+}
 
 // **********************************
 // Setup COMMAND Processing
@@ -1135,12 +1222,14 @@ function SystemSocketMessageHandler(evt)
     
     if ( result["id"] == "STATUS_CHECK" )
     {
+	console.log("## SystemSocketMessageHandler(): id == STATUS_CHECK\n");
         if (result["data"] == 1)
             document.getElementById("LinuxCNCRunStatus").innerHTML = "Running";
         else
             document.getElementById("LinuxCNCRunStatus").innerHTML = "Down";
     } else if ( result["id"] == "INI_MONITOR" )
     {
+	console.log("## SystemSocketMessageHandler(): id == INI_MONITOR\n");
         document.forms["INIForm"]["ini_name"].value = result["data"];
     } else if ( result["id"] == "INI_SET" )
     {
