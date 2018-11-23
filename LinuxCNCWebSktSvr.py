@@ -7,6 +7,17 @@
 #
 # Usage: LinuxCNCWebSktSvr.py <LinuxCNC_INI_file_name>
 #
+# Provides a web server using normal HTTP/HTTPS communication
+# to information about the running LinuxCNC system.  Most
+# data is transferred to and from the server over a
+# WebSocket using JSON formatted commands and replies.
+#
+#
+# ***************************************************** 
+# *****************************************************
+#
+# Copyright 2012, 2013 Machinery Science, LLC
+#
 import sys
 import os
 import gc
@@ -804,6 +815,7 @@ class CommandItem( object ):
     def put_gcode_file( self, filename, data ):
         global linuxcnc_command
 
+        print "put_gcode_file() : enter, filename", filename # my debug
         reply = {'code':LinuxCNCServerCommand.REPLY_COMMAND_OK}
         try:
             
@@ -812,6 +824,7 @@ class CommandItem( object ):
             [h,f] = os.path.split( filename )
 
             path = StatusItem.get_ini_data( only_section='DISPLAY', only_name='PROGRAM_PREFIX' )['data']['parameters'][0]['values']['value']
+	    print "put_gcode_file() : path", path # my debug
             
             try:
                 fo = open( os.path.join( path, f ), 'w' )
@@ -827,6 +840,8 @@ class CommandItem( object ):
             if (reply['code'] == LinuxCNCServerCommand.REPLY_COMMAND_OK):
                 (linuxcnc_command.program_open( os.path.join( path, f ) ) )
             
+	    print "put_gcode_file() : exit successfully" # my debug
+
         except Exception as ex:
             print ex
             reply['code'] = LinuxCNCServerCommand.REPLY_ERROR_EXECUTING_COMMAND
@@ -861,30 +876,6 @@ class CommandItem( object ):
         
         return reply 
     
-
-    def go_home( self ):
-        try:
-            print "go_home() : enter" # my debug
-            
-            c = linuxcnc.command()
-            
-            c.mode(linuxcnc.MODE_MANUAL)
-            c.wait_complete() # wait until mode switch executed
-
-            c.home(0)
-            c.wait_complete() # wait until mode switch executed
-            c.home(1)
-            c.wait_complete() # wait until mode switch executed
-            c.home(2)
-            c.wait_complete() # wait until mode switch executed
-
-            c.mode(linuxcnc.MODE_AUTO)
-            c.wait_complete() # wait until mode switch executed
-            
-            print "go_home() : exit, return code = ", LinuxCNCServerCommand.REPLY_COMMAND_OK # my debug
-            return {'code':LinuxCNCServerCommand.REPLY_COMMAND_OK }
-        except:
-            return {'code':LinuxCNCServerCommand.REPLY_ERROR_EXECUTING_COMMAND }
 
     def shutdown_linuxcnc( self ):
         try:
@@ -964,9 +955,9 @@ class CommandItem( object ):
                     print "paramval is None"
                     if not paramDesc['optional']:
                         print "not paramDesc['optional']"
-                        if (self.type != CommandItem.MOTION):
-                            print "self.type != CommandItem.MOTION"
-                            return { 'code':LinuxCNCServerCommand.REPLY_MISSING_COMMAND_PARAMETER + ' ' + paramDesc['name'] }
+#                        if (self.type != CommandItem.MOTION):
+#                            print "self.type != CommandItem.MOTION"
+                        return { 'code':LinuxCNCServerCommand.REPLY_MISSING_COMMAND_PARAMETER + ' ' + paramDesc['name'] }
                     else:
                         break
 
@@ -974,15 +965,8 @@ class CommandItem( object ):
             
             if (self.type == CommandItem.MOTION):
                 print "\nCommandItem.MOTION =", self.type  # debug
-                #print "self.help =", self.help  # debug
                 # execute command as a linuxcnc module call
-                if (self.name == 'home'):
-                    reply = self.go_home()
-                elif (self.name == 'auto'):
-                    print "auto command" # debug
-                    (linuxcnc_command.__getattribute__( self.name ))( *params )
-                else:
-                    (linuxcnc_command.__getattribute__( self.name ))( *params )
+                (linuxcnc_command.__getattribute__( self.name ))( *params )
 
             elif (self.type == CommandItem.HAL):
                 print "\nCommandItem.HAL =", self.type  # debug
@@ -1015,7 +999,9 @@ class CommandItem( object ):
                 elif (self.name == 'startup'):
                     reply = self.start_linuxcnc()
                 elif (self.name == 'program_upload'):
+                    print "call put_gcode_file()"
                     reply = self.put_gcode_file(filename=passed_command_dict.get('filename',passed_command_dict['0']).strip(), data=passed_command_dict.get('data', passed_command_dict['1']))
+                    print "after put_gcode_file()"
                 elif (self.name == 'save_client_config'):
                     reply = self.put_client_config( (passed_command_dict.get('key', passed_command_dict.get('0'))), (passed_command_dict.get('value', passed_command_dict.get('1'))) );
                 elif (self.name == 'add_user'):

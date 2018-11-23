@@ -466,8 +466,11 @@ function MessageHandlerServerReply(evt)
 function CommandSocketOpen()
 {
     // poll for command list
+    console.log("CommandSocketOpen(): enter\n"); // debug
     ws.onmessage = CommandListMessageHndlr;
     ws.send( JSON.stringify({ "id":"getlist", "command":"list_put" }) )
+    console.log("CommandSocketOpen(): ", JSON.stringify({ "id":"getlist", "command":"list_put" })); // debug
+    console.log("CommandSocketOpen(): exit\n"); // debug
 }
 
 
@@ -477,6 +480,7 @@ function CommandListMessageHndlr(evt)
     
     var command_item_list = new Object;
 
+    console.log("> CommandListMessageHndlr(): enter\n"); // debug
     try {
         var command_item_list = JSON.parse(evt.data);
 
@@ -506,6 +510,8 @@ function CommandListMessageHndlr(evt)
 
             selectobj.options[idx] = new Option( newStr, command_item_list.data[idx].name );
         }
+	console.log("> CommandListMessageHndlr(): newStr = ", newStr); // debug
+	console.log("> CommandListMessageHndlr(): exit\n"); // debug
     } 
     catch(err) {
         alert( "CommandListMessageHndlr: " + err.message );
@@ -526,6 +532,7 @@ function CNCCommandSubmit()
 
     var params = document.forms["CommandForm"]["parameters"].value.split(",");
 
+    console.log("CNCCommandSubmit(): enter\n"); // debug
     for (var idx = 0; idx < params.length; idx++)
     {    
         pname = idx.toString();
@@ -538,7 +545,9 @@ function CNCCommandSubmit()
 
     var cmd_msg = JSON.stringify( command_object );
 
+    console.log("CNCCommandSubmit(): cmd_msg = ", cmd_msg); // debug
     ws.send( cmd_msg ); 
+    console.log("CNCCommandSubmit(): exit\n"); // debug
 }
 
 // The user has selected a new item from the drop-down list of commands
@@ -1268,21 +1277,25 @@ function SystemSocketMessageHandler(evt)
 function E_Stop_OFF()
 {
     console.log("E_Stop_OFF(): enter\n");
-    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ESTOP_RESET" }) ) ;
+//x    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ESTOP_RESET" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ESTOP_RESET" }) ) ;
     console.log("E_Stop_OFF(): exit\n");
 }
 
 function Machine_ON()
 {
     console.log("Machine_ON(): enter\n");
-    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ON" }) ) ;
+//x    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ON" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ON" }) ) ;
     console.log("Machine_ON(): exit\n");  
 }
 
 function Go_Home()
 {
     console.log("Go_Home(): enter\n");
-    ws.send( JSON.stringify({ "id":"Home_Set", "command":"put", "name":"home" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"0" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"1" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"2" }) ) ;
     console.log("Go_Home(): exit\n");  
 }
 
@@ -1290,43 +1303,103 @@ function Open_3D_File()
 {
 // c.program_open("/home/stepdir/linuxcnc/nc_files/examples/arcspiral.ngc")
     console.log("Open_3D_File(): enter\n"); // debug
-    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
-// c.reset_interpreter()
+//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
+//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_upload", "filename":"/home/oleg/Temp/3dtest_local.ngc", "data":"n101	g20" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_AUTO" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_open", "0":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;   //? "filename" <-> "0"    
     console.log("Open_3D_File(): exit\n"); // debug
 }
+
+function Upload_File()
+{
+// c.program_open("/home/stepdir/linuxcnc/nc_files/examples/arcspiral.ngc")
+    console.log("Upload_File(): enter\n"); // debug
+//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
+//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_upload", "filename":"/home/oleg/Temp/3dtest_local.ngc", "data":"n101	g20" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_AUTO" }) ) ;
+//x    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_open", "0":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;       
+    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_upload", "filename":"/home/oleg/Temp/3dtest_local.ngc", "data":"n101	g20"/*"optional":"true"*/ }) ) ;
+//e CNCCommandSubmit(): cmd_msg =  {"0":"3dtest_local.ngc","1":"\"g0 x0\"","command":"put","name":"program_upload","id":"COMMAND"}    
+//e CNCCommandSubmit(): cmd_msg =  {"0":"test1.ngc","1":"g0 x0\\n g0 y1\\n g0 z3\\n","command":"put","name":"program_upload","id":"COMMAND"}    
+    console.log("Upload_File(): exit\n"); // debug
+}
+
+function MDI_cmd()
+{
+    console.log("MDI_cmd(): enter\n"); // debug
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_MDI" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mdi", "0":"g0 x1 y2 z3" }) ) ;
+    console.log("MDI_cmd(): exit\n"); // debug
+}
+/*
+CNCCommandSubmit(): cmd_msg =  {"0":"MODE_MDI","command":"put","name":"mode","id":"COMMAND"}
+self.name = mode
+self.type = 0
+It is CommandItem.MOTION
+self.paramTypes = [{'lookup-vals': ['MODE_AUTO', 'MODE_MANUAL', 'MODE_MDI'], 'optional': False, 'pname': 'mode', 'ptype': 'lookup', 'ordinal': '0'}]
+ptype = lookup
+pname = mode
+paramtype == lookup = true
+after for{} CommandItem = 0
+
+CommandItem.MOTION = 0
+
+CNCCommandSubmit(): cmd_msg =  {"0":"MODE_MANUAL","command":"put","name":"mode","id":"COMMAND"}
+self.name = mode
+self.type = 0
+It is CommandItem.MOTION
+self.paramTypes = [{'lookup-vals': ['MODE_AUTO', 'MODE_MANUAL', 'MODE_MDI'], 'optional': False, 'pname': 'mode', 'ptype': 'lookup', 'ordinal': '0'}]
+ptype = lookup
+pname = mode
+paramtype == lookup = true
+after for{} CommandItem = 0
+
+CommandItem.MOTION = 0
+
+CNCCommandSubmit(): cmd_msg =  {"0":"0","command":"put","name":"home","id":"COMMAND"}
+CNCCommandSubmit(): cmd_msg =  {"0":"1","command":"put","name":"home","id":"COMMAND"}
+CNCCommandSubmit(): cmd_msg =  {"0":"2","command":"put","name":"home","id":"COMMAND"}
+
+CNCCommandSubmit(): cmd_msg =  {"0":"g0 x5","command":"put","name":"mdi","id":"COMMAND"}
+CNCCommandSubmit(): cmd_msg =  {"0":"g0 y1","command":"put","name":"mdi","id":"COMMAND"}
+CNCCommandSubmit(): cmd_msg =  {"0":"g0 x1 y2 z3","command":"put","name":"mdi","id":"COMMAND"}
+
+CNCCommandSubmit(): cmd_msg =  {"0":"MODE_AUTO","command":"put","name":"mode","id":"COMMAND"}
+CNCCommandSubmit(): cmd_msg =  {"0":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc","command":"put","name":"program_open","id":"COMMAND"}
+*/
 
 function Play_Gcodes()
 {
 // CommandItem( name='auto', paramTypes=[ {'pname':'auto', 'ptype':'lookup', 'lookup-vals':['AUTO_RUN','AUTO_STEP','AUTO_RESUME','AUTO_PAUSE'], 'optional':False }, {'pname':'run_from', 'ptype':'int', 'optional':True} ],
 // help='run, step, pause or resume a program.  auto legal values: AUTO_RUN, AUTO_STEP, AUTO_RESUME, AUTO_PAUSE' ).register_in_dict( CommandItems )
-    ws.send( JSON.stringify({ "id":"Play_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_RUN", "run_from":"0" }) ) ;  
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"auto", "auto":"AUTO_RUN", "run_from":"0" }) ) ;  
 }
 
 function Step_Gcodes()
 {
     console.log("Step_Gcodes(): enter\n"); // debug
-    ws.send( JSON.stringify({ "id":"Step_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_STEP" }) ) ;  
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"auto", "auto":"AUTO_STEP" }) ) ;  
     console.log("Step_Gcodes(): exit\n"); // debug
 }
 
 function Pause_Gcodes()
 {
     console.log("Pause_Gcodes(): enter\n"); // debug
-    ws.send( JSON.stringify({ "id":"Pause_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_PAUSE" }) ) ;  
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"auto", "auto":"AUTO_PAUSE" }) ) ;  
     console.log("Pause_Gcodes(): exit\n"); // debug
 }
 
 function Resume_Gcodes()
 {
     console.log("Resume_Gcodes(): enter\n"); // debug
-    ws.send( JSON.stringify({ "id":"Resume_Gcodes", "command":"put", "name":"auto", "auto":"AUTO_RESUME" }) ) ;  
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"auto", "auto":"AUTO_RESUME" }) ) ;  
     console.log("Resume_Gcodes(): exit\n"); // debug
 }
 
 function Stop_Gcodes() // Abort
 {
     console.log("Stop_Gcodes(): enter\n"); // debug
-    ws.send( JSON.stringify({ "id":"Stop_Gcodes", "command":"put", "name":"abort" }) ) ;  
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"abort" }) ) ;  
     console.log("Stop_Gcodes(): exit\n"); // debug
 }
 
