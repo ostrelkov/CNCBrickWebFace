@@ -14,22 +14,51 @@
         <button type="button" id="estop_off" value="E_Stop_Off" onclick="E_Stop_OFF();">E-Stop OFF</button>
         <button type="button" id="machine_on" value="Machine_On" onclick="Machine_ON();">Machine ON</button>
         <button type="button" id="home_set" value="Home_Set" onclick="Go_Home();">Home Axis (All)</button>
-        <button type="button" id="open_3d_file" value="Open_3D_File" onclick="Open_3D_File();">3Dtest File</button>
+<!--        <button type="button" id="open_3d_file" value="Open_3D_File" onclick="Open_3D_File();">3Dtest File</button>-->
         <button type="button" id="play_gcodes" value="Play_Gcodes" onclick="Play_Gcodes();">Play</button>
         <button type="button" id="step_gcodes" value="Step_Gcodes" onclick="Step_Gcodes();">Step</button>
         <button type="button" id="pause_gcodes" value="Pause_Gcodes" onclick="Pause_Gcodes();">Pause</button>
         <button type="button" id="resume_gcodes" value="Resume_Gcodes" onclick="Resume_Gcodes();">Resume</button>
         <button type="button" id="stop_gcodes" value="Stop_Gcodes" onclick="Stop_Gcodes();">Stop</button>
-<!--        <form enctype="multipart/form-data" method="post">--->
-            <p>G codes file <input type="file" name="gcodes" accept="*.ngc">
-        <button type="button" id="open_file" value="Open_File" onclick="Upload_File();">Load</button>
-<!--            <input type="submit" value="Load"></p>
-        </form>-->
+
+        <p>
         <form name="MDIForm" > 
             MDI Command: <input type="text" name="command_name" size=40>
             <button type="button" id="send_mdi_command" value="Send" onclick="MDI_cmd();">Send</button><br>        
         </form>
+        </p>
+        
+<!--        <form enctype="multipart/form-data" method="post">--->
+        <p>G codes file <input type="file" id="ngc_file" name="gcodes" accept="*.ngc">
+        <button type="button" id="open_file" value="Open_File" onclick="Upload_File();">Load</button>
+<!--            <input type="submit" value="Load"></p>
+        </form>-->
+	<br>
+<!--	<textarea style="width:500px;height: 200px" id="output"></textarea>-->
+<!--	<textarea rows="4" cols="60" readonly disabled id="output"></textarea>-->
+	<textarea rows="4" cols="60" readonly id="output"></textarea>
+	<script type="text/javascript">
+	    var input = document.getElementById("ngc_file");
+	    var output = document.getElementById("output");
+	    
+	    input.addEventListener("change", function () {
+	      if (this.files && this.files[0]) {
+		var myFile = this.files[0];
+		var reader = new FileReader();
+		
+		reader.addEventListener('load', function (e) {
+		  output.textContent = e.target.result;
+		  encodedFile = btoa(output.textContent);
+		  upload_f_name = input.value;
+		});
+		
+		reader.readAsBinaryString(myFile);
+	      }
+	    });
+	</script>
         </div>
+        
+        
         <!-- interface -->
         <div style="text-align:left">
             <p>X: <span id="actual_pos_x">0.0</span>&nbsp;[mm]<br>
@@ -64,9 +93,6 @@
             </div>
         </div>
 -->
-<hr>
-<p>G codes file content:
-</p>
 <hr>
 <p>Current LinuxCNC Status: <span id="LinuxCNCRunStatus">WebServer not available.</span></p>
 {% end %}

@@ -30,6 +30,8 @@ var HALCodeMirror;
 // WebSocket for communication to the linuxcnc server
 var ws;
 
+var encodedFile = "";
+var upload_f_name = "";
 
 
 function createCookie(name,value,days,path) {
@@ -1298,29 +1300,28 @@ function Go_Home()
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"2" }) ) ;
     console.log("Go_Home(): exit\n");  
 }
-
+/*
 function Open_3D_File()
 {
-// c.program_open("/home/stepdir/linuxcnc/nc_files/examples/arcspiral.ngc")
     console.log("Open_3D_File(): enter\n"); // debug
-//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
-//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_upload", "filename":"/home/oleg/Temp/3dtest_local.ngc", "data":"n101	g20" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_AUTO" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_open", "0":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;   //? "filename" <-> "0"    
     console.log("Open_3D_File(): exit\n"); // debug
 }
-
+*/
 function Upload_File()
 {
-// c.program_open("/home/stepdir/linuxcnc/nc_files/examples/arcspiral.ngc")
     console.log("Upload_File(): enter\n"); // debug
-//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_open", "filename":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;
-//?    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_upload", "filename":"/home/oleg/Temp/3dtest_local.ngc", "data":"n101	g20" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_AUTO" }) ) ;
-//x    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_open", "0":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;       
-    ws.send( JSON.stringify({ "id":"Program_Open", "command":"put", "name":"program_upload", "filename":"/home/oleg/Temp/3dtest_local.ngc", "data":"n101	g20"/*"optional":"true"*/ }) ) ;
-//e CNCCommandSubmit(): cmd_msg =  {"0":"3dtest_local.ngc","1":"\"g0 x0\"","command":"put","name":"program_upload","id":"COMMAND"}    
-//e CNCCommandSubmit(): cmd_msg =  {"0":"test1.ngc","1":"g0 x0\\n g0 y1\\n g0 z3\\n","command":"put","name":"program_upload","id":"COMMAND"}    
+
+    if (encodedFile == "") {
+	console.log("Upload_File(): file is absent\n"); // debug
+    } else {
+	console.log("Upload_File(): file_name = ", upload_f_name);
+//	console.log("Upload_File(): encoded = ", encodedFile);
+//	console.log("decoded:\n", atob(encodedFile)); // debug
+	ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_upload", "0":upload_f_name, "1":encodedFile }) ); //? "filename" <-> "0"    
+    }
     console.log("Upload_File(): exit\n"); // debug
 }
 

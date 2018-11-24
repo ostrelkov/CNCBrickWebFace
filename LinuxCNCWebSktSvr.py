@@ -51,6 +51,8 @@ import glob
 from random import random
 from time import strftime
 from optparse import OptionParser
+
+import base64 # added for upload file decoding
     
 UpdateStatusPollPeriodInMilliSeconds = 50
 UpdateHALPollPeriodInMilliSeconds = 500
@@ -816,6 +818,8 @@ class CommandItem( object ):
         global linuxcnc_command
 
         print "put_gcode_file() : enter, filename", filename # my debug
+#        print "put_gcode_file() : encoded data", data # my debug
+#        print "put_gcode_file() : decoded data", base64.b64decode(data)
         reply = {'code':LinuxCNCServerCommand.REPLY_COMMAND_OK}
         try:
             
@@ -823,12 +827,15 @@ class CommandItem( object ):
             # we will only look in the config directory, so we ignore path
             [h,f] = os.path.split( filename )
 
-            path = StatusItem.get_ini_data( only_section='DISPLAY', only_name='PROGRAM_PREFIX' )['data']['parameters'][0]['values']['value']
+            #path = StatusItem.get_ini_data( only_section='DISPLAY', only_name='PROGRAM_PREFIX' )['data']['parameters'][0]['values']['value']
+            path = "/tmp"
 	    print "put_gcode_file() : path", path # my debug
             
             try:
                 fo = open( os.path.join( path, f ), 'w' )
-                fo.write(data)
+#                fo.write(data)
+		# write encoded data into file
+                fo.write(base64.b64decode(data))
             except:
                 reply['code'] = LinuxCNCServerCommand.REPLY_ERROR_EXECUTING_COMMAND
             finally:
