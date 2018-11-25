@@ -30,9 +30,15 @@ var HALCodeMirror;
 // WebSocket for communication to the linuxcnc server
 var ws;
 
+STATE_ESTOP = 1;
+STATE_ESTOP_RESET = 2;
+STATE_OFF = 3;
+STATE_ON = 4;
+
 var encodedFile = "";
 var upload_f_name = "";
-
+var mach_state;
+var homed;
 
 function createCookie(name,value,days,path) {
         var expires = ""
@@ -1206,10 +1212,10 @@ function ControlSocketOpen()
 
    // Get a list from the server of all linuxcnc status items
     ws.send( JSON.stringify({ "id":"STATUS_CHECK", "command":"watch", "name":"running" }) ) ;
-//    ws.send( JSON.stringify({ "id":"INI_MONITOR", "command":"watch", "name":"ini_file_name" }) ) ;
     ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"watch", "name":"actual_position" }) );
-//x    ws.send( JSON.stringify({ "id":"ACTUAL_POS", "command":"get", "name":"actual_position" }) );
     ws.send( JSON.stringify({ "id":"DTG_POS", "command":"watch", "name":"dtg" }) );
+    ws.send( JSON.stringify({ "id":"MACH_STATE", "command":"watch", "name":"task_state" }) );
+    ws.send( JSON.stringify({ "id":"HOMED", "command":"watch", "name":"homed" }) );
 }
 
 function ControlSocketMessageHandler(evt)
@@ -1236,6 +1242,43 @@ function ControlSocketMessageHandler(evt)
         document.getElementById("dtg_pos_x").innerHTML = actual_pos[0].toFixed(4);
         document.getElementById("dtg_pos_y").innerHTML = actual_pos[1].toFixed(4);
         document.getElementById("dtg_pos_z").innerHTML = actual_pos[2].toFixed(4);
+    } else if ( result["id"] == "MACH_STATE" ) {
+        mach_state = result['data'];
+        document.getElementById("machine_state").innerHTML = mach_state; // debug
+	if ( mach_state === STATE_ESTOP ) { // e-stop on
+	    document.getElementById("estop_off").className = "on";
+	    // all buttons disable
+	    document.getElementById("machine_on").disabled = true;
+	    document.getElementById("home_set").disabled = true;
+	    document.getElementById("play_gcodes").disabled = true;
+	    document.getElementById("step_gcodes").disabled = true;
+	    document.getElementById("pause_gcodes").disabled = true;
+	    document.getElementById("resume_gcodes").disabled = true;
+	    document.getElementById("stop_gcodes").disabled = true;
+	} else if ( mach_state === STATE_ESTOP_RESET ) { // state off
+	    document.getElementById("estop_off").className = "off";
+	    document.getElementById("machine_on").className = "off";
+	    document.getElementById("machine_on").disabled = false;
+	    document.getElementById("home_set").disabled = true;
+	    document.getElementById("play_gcodes").disabled = true;
+	    document.getElementById("step_gcodes").disabled = true;
+	    document.getElementById("pause_gcodes").disabled = true;
+	    document.getElementById("resume_gcodes").disabled = true;
+	    document.getElementById("stop_gcodes").disabled = true;
+	} else if ( mach_state === STATE_ON ) { // state on
+	    document.getElementById("machine_on").className = "on";
+	    document.getElementById("home_set").disabled = false;
+	    document.getElementById("play_gcodes").disabled = false;
+	    document.getElementById("step_gcodes").disabled = false;
+	    document.getElementById("pause_gcodes").disabled = false;
+	    document.getElementById("resume_gcodes").disabled = false;
+	    document.getElementById("stop_gcodes").disabled = false;
+	}
+    } else if ( result["id"] == "HOMED" ) {
+        homed = result['data'];
+        document.getElementById("homed_x").innerHTML = homed[0];
+        document.getElementById("homed_y").innerHTML = homed[1];
+        document.getElementById("homed_z").innerHTML = homed[2];
     }
 }
 
@@ -1276,39 +1319,58 @@ function SystemSocketMessageHandler(evt)
 
 }
 
-function E_Stop_OFF()
+function button_toggle(id) {
+    console.log("button_toggle(): id = " + id);
+    if(document.getElementById(id).className==="on") {
+	document.getElementById(id).className = "off";
+    } else {
+	document.getElementById(id).className = "on";
+    }
+    return true;
+}
+
+function E_Stop_OFF(id)
 {
-    console.log("E_Stop_OFF(): enter\n");
-//x    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ESTOP_RESET" }) ) ;
-    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ESTOP_RESET" }) ) ;
+    console.log("E_Stop_OFF(): enter, state = " + mach_state);
+//x    console.log("E_Stop_OFF(): id = " + id);
+    
+    if ( mach_state === STATE_ESTOP ) { // e-stop on
+	document.getElementById("estop_off").className = "off";
+	ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ESTOP_RESET" }) ) ; //? "state" <-> "0"
+    } else if ( (mach_state === STATE_ESTOP_RESET) || (mach_state === STATE_ON) ) { // state off or machine on
+	document.getElementById("estop_off").className = "on";
+	document.getElementById("machine_on").className = "off";
+	ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ESTOP" }) ) ; //? "state" <-> "0"
+    }
+    button_toggle(id);    
     console.log("E_Stop_OFF(): exit\n");
 }
 
-function Machine_ON()
+function Machine_ON(id)
 {
-    console.log("Machine_ON(): enter\n");
-//x    ws.send( JSON.stringify({ "id":"Machine_ON", "command":"put", "name":"state", "state":"STATE_ON" }) ) ;
-    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ON" }) ) ;
+    console.log("Machine_ON(): enter, state = " + mach_state);
+    
+    if ( mach_state === STATE_ON ) { // state on
+	document.getElementById(id).className = "on";
+	ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_OFF" }) ) ;  //? "state" <-> "0"
+    } else if ( mach_state === STATE_ESTOP_RESET ) { // state off
+	document.getElementById(id).className = "off";
+	ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"state", "0":"STATE_ON" }) ) ;  //? "state" <-> "0"
+    }
+    button_toggle(id);
     console.log("Machine_ON(): exit\n");  
 }
 
 function Go_Home()
 {
     console.log("Go_Home(): enter\n");
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_MANUAL" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"0" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"1" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put","name":"home", "0":"2" }) ) ;
     console.log("Go_Home(): exit\n");  
 }
-/*
-function Open_3D_File()
-{
-    console.log("Open_3D_File(): enter\n"); // debug
-    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_AUTO" }) ) ;
-    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_open", "0":"/home/stepdir/linuxcnc/nc_files/examples/3dtest.ngc" }) ) ;   //? "filename" <-> "0"    
-    console.log("Open_3D_File(): exit\n"); // debug
-}
-*/
+
 function Upload_File()
 {
     console.log("Upload_File(): enter\n"); // debug
@@ -1328,8 +1390,11 @@ function Upload_File()
 function MDI_cmd()
 {
     console.log("MDI_cmd(): enter\n"); // debug
+    var mdi = document.getElementById("mdi_cmd").value;
+    console.log("MDI_cmd(): " + mdi); // debug
+    // TODO validate mdi string
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_MDI" }) ) ;
-    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mdi", "0":"g0 x1 y2 z3" }) ) ;
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mdi", "0":mdi }) ) ;
     console.log("MDI_cmd(): exit\n"); // debug
 }
 /*
@@ -1373,6 +1438,7 @@ function Play_Gcodes()
 {
 // CommandItem( name='auto', paramTypes=[ {'pname':'auto', 'ptype':'lookup', 'lookup-vals':['AUTO_RUN','AUTO_STEP','AUTO_RESUME','AUTO_PAUSE'], 'optional':False }, {'pname':'run_from', 'ptype':'int', 'optional':True} ],
 // help='run, step, pause or resume a program.  auto legal values: AUTO_RUN, AUTO_STEP, AUTO_RESUME, AUTO_PAUSE' ).register_in_dict( CommandItems )
+    ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"mode", "0":"MODE_AUTO" }) ) ;
     ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"auto", "auto":"AUTO_RUN", "run_from":"0" }) ) ;  
 }
 

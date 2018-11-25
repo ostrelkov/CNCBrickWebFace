@@ -11,19 +11,20 @@
 
 {% block custom_body %}
         <div id="top_button_bar">
-        <button type="button" id="estop_off" value="E_Stop_Off" onclick="E_Stop_OFF();">E-Stop OFF</button>
-        <button type="button" id="machine_on" value="Machine_On" onclick="Machine_ON();">Machine ON</button>
+        <button type="button" id="estop_off" value="E_Stop_Off" onclick="E_Stop_OFF(this.id);">E-Stop OFF</button>
+	<button type="button" id="machine_on" value="Machine_On" class="off" onclick="Machine_ON(this.id);">Machine ON</button>
         <button type="button" id="home_set" value="Home_Set" onclick="Go_Home();">Home Axis (All)</button>
-<!--        <button type="button" id="open_3d_file" value="Open_3D_File" onclick="Open_3D_File();">3Dtest File</button>-->
         <button type="button" id="play_gcodes" value="Play_Gcodes" onclick="Play_Gcodes();">Play</button>
         <button type="button" id="step_gcodes" value="Step_Gcodes" onclick="Step_Gcodes();">Step</button>
         <button type="button" id="pause_gcodes" value="Pause_Gcodes" onclick="Pause_Gcodes();">Pause</button>
         <button type="button" id="resume_gcodes" value="Resume_Gcodes" onclick="Resume_Gcodes();">Resume</button>
         <button type="button" id="stop_gcodes" value="Stop_Gcodes" onclick="Stop_Gcodes();">Stop</button>
 
+        <p>state: <span id="machine_state">&nbsp;</span>
+	<hr>
         <p>
         <form name="MDIForm" > 
-            MDI Command: <input type="text" name="command_name" size=40>
+            MDI Command: <input type="text" id="mdi_cmd" name="command_name" size=40>
             <button type="button" id="send_mdi_command" value="Send" onclick="MDI_cmd();">Send</button><br>        
         </form>
         </p>
@@ -61,9 +62,9 @@
         
         <!-- interface -->
         <div style="text-align:left">
-            <p>X: <span id="actual_pos_x">0.0</span>&nbsp;[mm]<br>
-               Y: <span id="actual_pos_y">0.0</span>&nbsp;[mm]<br>
-               Z: <span id="actual_pos_z">0.0</span>&nbsp;[mm]</p>
+            <p>X: <span id="actual_pos_x">0.0</span>&nbsp;[mm]&nbsp;<span id="homed_x"></span><br>
+               Y: <span id="actual_pos_y">0.0</span>&nbsp;[mm]&nbsp;<span id="homed_y"></span><br>
+               Z: <span id="actual_pos_z">0.0</span>&nbsp;[mm]&nbsp;<span id="homed_z"></span></p>
             <p>DTG X: <span id="dtg_pos_x">0.0</span>&nbsp;[mm]<br>
                DTG Y: <span id="dtg_pos_y">0.0</span>&nbsp;[mm]<br>
                DTG Z: <span id="dtg_pos_z">0.0</span>&nbsp;[mm]</p>
