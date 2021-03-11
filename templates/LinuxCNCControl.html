@@ -20,7 +20,7 @@
         <button type="button" id="resume_gcodes" value="Resume_Gcodes" onclick="Resume_Gcodes();">Resume</button>
         <button type="button" id="stop_gcodes" value="Stop_Gcodes" onclick="Stop_Gcodes();">Stop</button>
 
-        <p>state: <span id="machine_state">&nbsp;</span>
+        <p>debug (state: <span id="machine_state">&nbsp;</span>&nbsp;mode: <span id="task_mode">&nbsp;</span>)</p>
 	<hr>
         <p>
         <form name="MDIForm" > 
@@ -32,6 +32,7 @@
 <!--        <form enctype="multipart/form-data" method="post">--->
         <p>G codes file <input type="file" id="ngc_file" name="gcodes" accept="*.ngc">
         <button type="button" id="open_file" value="Open_File" onclick="Upload_File();">Load</button>
+        &nbsp;line: <span id="current_line">&nbsp;</span>
 <!--            <input type="submit" value="Load"></p>
         </form>-->
 	<br>

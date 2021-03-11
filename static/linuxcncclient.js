@@ -38,6 +38,7 @@ STATE_ON = 4;
 var encodedFile = "";
 var upload_f_name = "";
 var mach_state;
+var task_mode;
 var homed;
 
 function createCookie(name,value,days,path) {
@@ -1199,7 +1200,47 @@ function DeleteUser()
     document.forms["UserForm"]["user_password"].value = "";
 }
 
+function selectTextareaLine(id, lineNum)
+{
+    lineNum--; // array starts at 0
+    tarea = document.getElementById(id);
+    var lines = tarea.value.split("\n");
 
+    // calculate start/end
+    var startPos = 0,
+	endPos = tarea.value.length;
+    for (var x = 0; x < lines.length; x++) {
+	if (x == lineNum) {
+	    break;
+	}
+	startPos += (lines[x].length + 1);
+    }
+    
+    var endPos = lines[lineNum].length + startPos;
+
+    // do selection
+    // Chrome / Firefox
+    if (typeof(tarea.selectionStart) != "undefined") {
+	tarea.focus();
+	tarea.selectionStart = startPos;
+	tarea.selectionEnd = endPos;
+	return true;
+    }
+
+    // IE
+    if (document.selection && document.selection.createRange) {
+	tarea.focus();
+	tarea.select();
+	var range = document.selection.createRange();
+	range.collapse(true);
+	range.moveEnd("character", endPos);
+	range.moveStart("character", startPos);
+	range.select();
+	return true;
+    }
+
+    return false;
+}
 // ********************************
 // for System tab
 // 
@@ -1216,6 +1257,15 @@ function ControlSocketOpen()
     ws.send( JSON.stringify({ "id":"DTG_POS", "command":"watch", "name":"dtg" }) );
     ws.send( JSON.stringify({ "id":"MACH_STATE", "command":"watch", "name":"task_state" }) );
     ws.send( JSON.stringify({ "id":"HOMED", "command":"watch", "name":"homed" }) );
+
+    ws.send( JSON.stringify({ "id":"ACTIVE_COORD_SYS", "command":"watch", "name":"g5x_index" }) ); // 'currently active coordinate system, G54=0, G55=1 etc.'
+    ws.send( JSON.stringify({ "id":"OFFSET_G5X", "command":"watch", "name":"g5x_offset" }) ); // 'offset of the currently active coordinate system, a pose'
+    ws.send( JSON.stringify({ "id":"OFFSET_G92", "command":"watch", "name":"g92_offset" }) ); // 'pose of the current g92 offset'
+//    ws.send( JSON.stringify({ "id":"CURRENT_GCODE", "command":"watch", "name":"gcodes" }) ); // 'currently active G-codes. Tuple of 16 ints.'
+//    ws.send( JSON.stringify({ "id":"CURRENT_CMD", "command":"watch", "name":"command" }) ); // 'Currently executing command'
+    ws.send( JSON.stringify({ "id":"TASK_MODE", "command":"watch", "name":"task_mode" }) );
+    ws.send( JSON.stringify({ "id":"CURRENT_LINE", "command":"watch", "name":"motion_line" }) );
+// StatusItem( name='axes',                     watchable=True, valtype='int' ,    help='From [TRAJ]AXES ini value' ).register_in_dict( StatusItems )
 }
 
 function ControlSocketMessageHandler(evt)
@@ -1268,18 +1318,42 @@ function ControlSocketMessageHandler(evt)
 	} else if ( mach_state === STATE_ON ) { // state on
 	    document.getElementById("machine_on").className = "on";
 	    document.getElementById("home_set").disabled = false;
-	    document.getElementById("play_gcodes").disabled = false;
-	    document.getElementById("step_gcodes").disabled = false;
-	    document.getElementById("pause_gcodes").disabled = false;
-	    document.getElementById("resume_gcodes").disabled = false;
-	    document.getElementById("stop_gcodes").disabled = false;
+/*	    if ( task_mode === 2 ) {
+		document.getElementById("play_gcodes").disabled = false;
+		document.getElementById("step_gcodes").disabled = false;
+		document.getElementById("pause_gcodes").disabled = false;
+		document.getElementById("resume_gcodes").disabled = false;
+		document.getElementById("stop_gcodes").disabled = false;
+	    }*/
 	}
     } else if ( result["id"] == "HOMED" ) {
         homed = result['data'];
         document.getElementById("homed_x").innerHTML = homed[0];
         document.getElementById("homed_y").innerHTML = homed[1];
         document.getElementById("homed_z").innerHTML = homed[2];
-    }
+    } else if ( result["id"] == "ACTIVE_COORD_SYS" ) {
+	console.log("## ControlSocketMessageHandler(): id == ACTIVE_COORD_SYS " + result['data']); // debug
+    } else if ( result["id"] == "OFFSET_G5X" ) {
+	console.log("## ControlSocketMessageHandler(): id == OFFSET_G5X " + result['data']); // debug
+    } else if ( result["id"] == "OFFSET_G92" ) {
+	console.log("## ControlSocketMessageHandler(): id == OFFSET_G92 " + result['data']); // debug
+/*    } else if ( result["id"] == "CURRENT_GCODE" ) {
+	console.log("## ControlSocketMessageHandler(): id == CURRENT_GCODE " + result['data']); // debug
+    } else if ( result["id"] == "CURRENT_CMD" ) {
+	console.log("## ControlSocketMessageHandler(): id == CURRENT_CMD " + result['data']); // debug*/
+    } else if ( result["id"] == "TASK_MODE" ) {
+	task_mode = result['data'];
+	console.log("## ControlSocketMessageHandler(): id == TASK_MODE " + task_mode); // debug
+        document.getElementById("task_mode").innerHTML = task_mode; // debug
+    } else if ( result["id"] == "CURRENT_LINE" ) {
+	line = result['data'];
+	console.log("## ControlSocketMessageHandler(): id == CURRENT_LINE " + line); // debug
+        document.getElementById("current_line").innerHTML = line; // debug
+//        if ( upload_f_name != "" ) {
+        if ( line > 0 ) {
+	    selectTextareaLine("output", line);
+	}
+    }   
 }
 
 // ********************************
@@ -1384,6 +1458,11 @@ function Upload_File()
 //	console.log("decoded:\n", atob(encodedFile)); // debug
 	ws.send( JSON.stringify({ "id":"COMMAND", "command":"put", "name":"program_upload", "0":upload_f_name, "1":encodedFile }) ); //? "filename" <-> "0"    
     }
+    document.getElementById("play_gcodes").disabled = false;
+    document.getElementById("step_gcodes").disabled = false;
+    document.getElementById("pause_gcodes").disabled = false;
+    document.getElementById("resume_gcodes").disabled = false;
+    document.getElementById("stop_gcodes").disabled = false;
     console.log("Upload_File(): exit\n"); // debug
 }
 
